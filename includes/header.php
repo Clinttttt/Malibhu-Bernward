@@ -29,17 +29,18 @@
     <div class="nav-links">
 
         <?php 
-        // Check if admin is configured
-        $admin_configured = file_exists(
-            (strpos($_SERVER['PHP_SELF'], '/user/') !== false || strpos($_SERVER['PHP_SELF'], '/admin/') !== false) 
-            ? '../config/admin.txt' 
-            : 'config/admin.txt'
-        );
-        
-        // Only show navigation if admin is configured OR we're on setup page
+        // Check if we're on setup page - hide all navigation
         $on_setup_page = strpos($_SERVER['PHP_SELF'], 'setup.php') !== false;
         
-        if($admin_configured || $on_setup_page):
+        if(!$on_setup_page):
+            // Check if admin is configured
+            $admin_configured = file_exists(
+                (strpos($_SERVER['PHP_SELF'], '/user/') !== false || strpos($_SERVER['PHP_SELF'], '/admin/') !== false) 
+                ? '../config/admin.txt' 
+                : 'config/admin.txt'
+            );
+            
+            if($admin_configured):
         ?>
 
         <a href="<?php echo strpos($_SERVER['PHP_SELF'], '/user/') !== false || strpos($_SERVER['PHP_SELF'], '/admin/') !== false ? '../' : ''; ?>index.php">
@@ -68,7 +69,10 @@
         </a>
         <?php endif; ?>
         
-        <?php endif; ?>
+        <?php 
+            endif; // end admin_configured
+        endif; // end !on_setup_page
+        ?>
 
     </div>
 
