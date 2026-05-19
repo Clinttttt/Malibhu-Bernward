@@ -1,0 +1,34 @@
+# Files to DELETE Before Uploading to InfinityFree
+
+These are debug/test files that should NOT be uploaded:
+
+## Root Directory:
+- check_db.php
+- debug.php
+- test_bytes.php
+- test_query.php
+- test_login.php
+- rebuild_db.php
+- fresh_start.php
+- final_test.php
+- database_backup_*.db (all backup files)
+
+## User Directory:
+- user/debug_dashboard.php
+
+## Keep These Files:
+✅ .htaccess (IMPORTANT - for security!)
+✅ database.db (will be created automatically, but you can upload existing one)
+✅ All other .php files
+✅ All folders (css, js, images, includes, config, admin, user)
+✅ SETUP.md, FIXES_APPLIED.md, INFINITYFREE_DEPLOYMENT.md (optional documentation)
+
+---
+
+Quick Delete Command (if using command line):
+```
+del check_db.php debug.php test_*.php rebuild_db.php fresh_start.php final_test.php database_backup_*.db
+del user\debug_dashboard.php
+```
+
+Or just manually delete them before uploading via FTP/File Manager.

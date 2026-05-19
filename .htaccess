@@ -1,0 +1,35 @@
+# Security Settings
+<Files "database.db">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.db">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Prevent directory browsing
+Options -Indexes
+
+# Hide sensitive files
+<FilesMatch "^(check_db|debug_dashboard|test_|rebuild_db|fresh_start|final_test)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# PHP Settings
+php_value upload_max_filesize 2M
+php_value post_max_size 2M
+php_value max_execution_time 30
+php_value max_input_time 30
+
+# Error handling (hide errors in production)
+php_flag display_errors Off
+php_flag display_startup_errors Off
+php_value error_reporting 0
+
+# Enable sessions
+php_flag session.auto_start Off
+php_value session.cookie_lifetime 0
+php_value session.gc_maxlifetime 1440
