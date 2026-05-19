@@ -1,5 +1,13 @@
 <?php
 session_start();
+
+// Check if admin is configured (first run check)
+$admin_file = '../config/admin.txt';
+if(!file_exists($admin_file)){
+    header("Location: ../admin/setup.php");
+    exit();
+}
+
 include("../config/db.php");
 
 if(!isset($_SESSION['user_id'])){
