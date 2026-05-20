@@ -14,7 +14,9 @@ CREATE TABLE reservations (
     user_id INT NOT NULL,
     event_type VARCHAR(100) NOT NULL,
     reservation_date DATE NOT NULL,
+    checkout_date DATE,
     guests INT NOT NULL,
+    special_request TEXT,
     status VARCHAR(50) DEFAULT 'Pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

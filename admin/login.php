@@ -1,74 +1,76 @@
 <?php
 session_start();
-include("../config/db.php");
+require_once("../config/admin_auth.php");
 
-// Check if admin needs setup
-$admin_file = '../config/admin.txt';
-if(!file_exists($admin_file)){
+$error = '';
+$credentials = admin_credentials_load();
+
+if(!$credentials){
     header("Location: setup.php");
     exit();
 }
 
-// Load admin credentials
-$admin_data = file_get_contents($admin_file);
-list($admin_username, $admin_password) = explode(':', $admin_data);
-
-// Check if admin has remember me cookie
-if(!isset($_SESSION['admin_logged_in']) && isset($_COOKIE['admin_token'])){
-    if($_COOKIE['admin_token'] === md5($admin_username . ':' . $admin_password)){
+if(isset($_COOKIE['admin_token'])){
+    $expected = hash('sha256', $credentials['username'] . ':' . $credentials['password']);
+    if(hash_equals($expected, $_COOKIE['admin_token'])){
         $_SESSION['admin_logged_in'] = true;
         header("Location: dashboard.php");
         exit();
     }
 }
 
-if(isset($_POST['login'])){
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
+if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    $username = isset($_POST['username']) ? trim($_POST['username']) : '';
+    $password = isset($_POST['password']) ? trim($_POST['password']) : '';
     $remember = isset($_POST['remember']);
-    
-    // Check credentials
-    if($username === $admin_username && $password === $admin_password){
+
+    if($username === '' || $password === ''){
+        $error = "Username and password are required.";
+    } elseif(hash_equals($credentials['username'], $username) && admin_password_matches($password, $credentials['password'])){
         $_SESSION['admin_logged_in'] = true;
-        
-        // Set remember me cookie for 30 days
-        if($remember){
-            $token = md5($admin_username . ':' . $admin_password);
-            setcookie('admin_token', $token, time() + (30 * 24 * 60 * 60), '/');
+        admin_credentials_upgrade_if_needed($username, $password, $credentials['password']);
+        $credentials = admin_credentials_load();
+
+        if($remember && $credentials){
+            $token = hash('sha256', $credentials['username'] . ':' . $credentials['password']);
+            setcookie('admin_token', $token, time() + (86400 * 30), '/', '', false, true);
         }
-        
+
         header("Location: dashboard.php");
         exit();
     } else {
-        $error = "Invalid admin credentials";
+        $error = "Invalid admin credentials.";
     }
 }
+
+$page_title = 'Admin Login';
+include("../includes/header.php");
 ?>
 
-<?php include("../includes/header.php"); ?>
-
-<div class="auth-section">
-    <div class="auth-box">
+<main class="auth-section">
+    <section class="auth-box">
         <h2>Admin Login</h2>
-        
-        <?php if(isset($error)): ?>
-            <p style="color:red; text-align:center; margin-bottom:20px;"><?= $error ?></p>
+        <p style="text-align:center; margin-bottom:24px;">Manage reservation requests, approvals, and resort bookings.</p>
+
+        <?php if($error): ?>
+            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        
+
         <form method="POST">
-            <input type="text" name="username" placeholder="Admin Username" required>
-            <input type="password" name="password" placeholder="Admin Password" required>
-            
-            <div style="text-align:left; margin:10px 0;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-            <input type="checkbox" name="remember" value="1" style="width:auto; margin:0;">
-            <span>Remember Me (30 days)</span>
+            <label for="username">Username</label>
+            <input id="username" type="text" name="username" placeholder="Admin username" required>
+
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" placeholder="Admin password" required>
+
+            <label style="display:flex; align-items:center; gap:10px; margin:8px 0 18px;">
+                <input type="checkbox" name="remember" value="1" style="width:auto; min-height:auto;">
+                <span>Keep me signed in for 30 days</span>
             </label>
-            </div>
-            
-            <button type="submit" name="login" class="btn-gold">Login as Admin</button>
+
+            <button type="submit" class="btn-book">Login to Dashboard</button>
         </form>
-    </div>
-</div>
+    </section>
+</main>
 
 <?php include("../includes/footer.php"); ?>

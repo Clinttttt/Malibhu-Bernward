@@ -1,65 +1,67 @@
 <?php
 session_start();
-include("../config/db.php");
+require_once("../config/admin_auth.php");
 
-// Check if admin already exists
-$admin_file = '../config/admin.txt';
+$error = '';
+$success = false;
 
-if(file_exists($admin_file)){
+if(admin_credentials_exist()){
     header("Location: login.php");
     exit();
 }
 
-if(isset($_POST['setup'])){
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    $confirm = trim($_POST['confirm']);
-    
-    if(empty($username) || empty($password)){
-        $error = "All fields are required";
-    } elseif($password !== $confirm){
-        $error = "Passwords do not match";
+if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    $username = isset($_POST['username']) ? trim($_POST['username']) : '';
+    $password = isset($_POST['password']) ? trim($_POST['password']) : '';
+    $confirm = isset($_POST['confirm']) ? trim($_POST['confirm']) : '';
+
+    if($username === '' || $password === '' || $confirm === ''){
+        $error = "All fields are required.";
+    } elseif(strlen($username) < 3){
+        $error = "Username must be at least 3 characters.";
     } elseif(strlen($password) < 5){
-        $error = "Password must be at least 5 characters";
+        $error = "Password must be at least 5 characters.";
+    } elseif($password !== $confirm){
+        $error = "Passwords do not match.";
+    } elseif(admin_credentials_save($username, $password)){
+        $success = true;
     } else {
-        // Save admin credentials
-        $admin_data = $username . ':' . $password;
-        file_put_contents($admin_file, $admin_data);
-        
-        echo "<script>
-        alert('Admin account created successfully!');
-        window.location='login.php';
-        </script>";
-        exit();
+        $error = "Failed to create the admin account. Please check file permissions.";
     }
 }
+
+if($success){
+    $_SESSION['admin_logged_in'] = true;
+    header("Location: dashboard.php");
+    exit();
+}
+
+$page_title = 'Admin Setup';
+include("../includes/header.php");
 ?>
 
-<?php include("../includes/header.php"); ?>
+<main class="auth-section">
+    <section class="auth-box">
+        <h2>Create Admin</h2>
+        <p style="text-align:center; margin-bottom:24px;">Set up the first administrator account for this reservation system.</p>
 
-<div class="auth-section">
-    <div class="auth-box">
-        <h2>🔧 Admin Setup</h2>
-        <p style="text-align:center; color:#666; margin-bottom:20px;">
-            First time setup - Create your admin account
-        </p>
-        
-        <?php if(isset($error)): ?>
-            <p style="color:red; text-align:center; margin-bottom:20px;"><?= $error ?></p>
+        <?php if($error): ?>
+            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        
-        <form method="POST">
-            <input type="text" name="username" placeholder="Admin Username" required minlength="3">
-            <input type="password" name="password" placeholder="Admin Password" required minlength="5">
-            <input type="password" name="confirm" placeholder="Confirm Password" required minlength="5">
-            
-            <button type="submit" name="setup" class="btn-gold">Create Admin Account</button>
+
+        <form method="POST" autocomplete="off">
+            <label for="username">Admin username</label>
+            <input id="username" type="text" name="username" placeholder="Enter username" required>
+
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" placeholder="Enter password" required>
+
+            <label for="confirm">Confirm password</label>
+            <input id="confirm" type="password" name="confirm" placeholder="Confirm password" required>
+
+            <button type="submit" class="btn-book">Create Admin Account</button>
         </form>
-        
-        <p style="text-align:center; margin-top:20px; color:#999; font-size:14px;">
-            This page will only appear once
-        </p>
-    </div>
-</div>
+    </section>
+</main>
 
 <?php include("../includes/footer.php"); ?>

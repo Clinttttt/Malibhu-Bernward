@@ -1,85 +1,73 @@
 <?php
-// Check if admin is configured (first run check)
-$admin_file = '../config/admin.txt';
-if(!file_exists($admin_file)){
-    header("Location: ../admin/setup.php");
+session_start();
+include("../config/db.php");
+
+$error = '';
+$success = false;
+
+if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $password = isset($_POST['password']) ? trim($_POST['password']) : '';
+    $confirm = isset($_POST['confirm']) ? trim($_POST['confirm']) : '';
+
+    if($name === '' || $email === '' || $password === '' || $confirm === ''){
+        $error = "All fields are required.";
+    } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)){
+        $error = "Enter a valid email address.";
+    } elseif(strlen($password) < 5){
+        $error = "Password must be at least 5 characters.";
+    } elseif($password !== $confirm){
+        $error = "Passwords do not match.";
+    } else {
+        try {
+            $stmt = $conn->prepare("INSERT INTO users(name, email, password) VALUES(?, ?, ?)");
+            $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT)]);
+            $success = true;
+        } catch(PDOException $e){
+            $error = $e->getCode() == 23000 ? "Email is already registered." : "Registration failed. Please try again.";
+        }
+    }
+}
+
+if($success){
+    header("Location: login.php?registered=1");
     exit();
 }
 
-include("../config/db.php");
-
-if(isset($_POST['register'])){
-
-$name = trim($_POST['name']);
-$email = trim($_POST['email']);
-$password = trim($_POST['password']);
-
-try {
-    $stmt = $conn->prepare("INSERT INTO users(name,email,password) VALUES (?,?,?)");
-    $stmt->execute([$name, $email, $password]);
-
-    echo "
-    <script>
-    alert('Registration Successful');
-    window.location='login.php';
-    </script>
-    ";
-} catch(PDOException $e) {
-    if($e->getCode() == 23000) {
-        echo "
-        <script>
-        alert('Email already registered. Please use a different email or login.');
-        </script>
-        ";
-    } else {
-        echo "
-        <script>
-        alert('Registration failed. Please try again.');
-        </script>
-        ";
-    }
-}
-}
+$page_title = 'User Registration';
+include("../includes/header.php");
 ?>
 
-<?php include("../includes/header.php"); ?>
+<main class="auth-section">
+    <section class="auth-box">
+        <h2>Create Account</h2>
+        <p style="text-align:center; margin-bottom:24px;">Register once, then manage your reservations from your dashboard.</p>
 
-<div class="auth-section">
+        <?php if($error): ?>
+            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
 
-<div class="auth-box">
+        <form method="POST" autocomplete="off">
+            <label for="name">Full name</label>
+            <input id="name" type="text" name="name" placeholder="Juan Dela Cruz" required>
 
-<h2>Create Account</h2>
+            <label for="email">Email address</label>
+            <input id="email" type="email" name="email" placeholder="name@example.com" required>
 
-<form method="POST">
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" placeholder="Create password" required>
 
-<input type="text"
-name="name"
-placeholder="Full Name"
-required>
+            <label for="confirm">Confirm password</label>
+            <input id="confirm" type="password" name="confirm" placeholder="Confirm password" required>
 
-<input type="email"
-name="email"
-placeholder="Email"
-required>
+            <button type="submit" class="btn-book">Register</button>
+        </form>
 
-<input type="password"
-name="password"
-placeholder="Password"
-required>
-
-<button
-type="submit"
-name="register"
-class="btn-gold">
-
-Register
-
-</button>
-
-</form>
-
-</div>
-
-</div>
+        <p style="text-align:center; margin-top:20px;">
+            Already have an account? <a href="login.php" style="color:var(--forest); font-weight:800; text-decoration:none;">Login here</a>
+        </p>
+    </section>
+</main>
 
 <?php include("../includes/footer.php"); ?>
