@@ -3,6 +3,8 @@ $is_user_area = strpos($_SERVER['PHP_SELF'], '/user/') !== false;
 $is_admin_area = strpos($_SERVER['PHP_SELF'], '/admin/') !== false;
 $base_path = ($is_user_area || $is_admin_area) ? '../' : '';
 $page_title = isset($page_title) ? $page_title . ' - Malibhu View Resort' : 'Malibhu View Resort';
+$css_version = file_exists(__DIR__ . '/../css/style.css') ? filemtime(__DIR__ . '/../css/style.css') : time();
+$js_version = file_exists(__DIR__ . '/../js/script.js') ? filemtime(__DIR__ . '/../js/script.js') : time();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,8 +12,8 @@ $page_title = isset($page_title) ? $page_title . ' - Malibhu View Resort' : 'Mal
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($page_title) ?></title>
-    <link rel="stylesheet" href="<?= $base_path ?>css/style.css">
-    <script src="<?= $base_path ?>js/script.js" defer></script>
+    <link rel="stylesheet" href="<?= $base_path ?>css/style.css?v=<?= $css_version ?>">
+    <script src="<?= $base_path ?>js/script.js?v=<?= $js_version ?>" defer></script>
 </head>
 <body>
 
